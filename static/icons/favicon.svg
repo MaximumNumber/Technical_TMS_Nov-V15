@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a3341"/>
+      <stop offset="100%" style="stop-color:#17616c"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00c9b1"/>
+      <stop offset="100%" style="stop-color:#00a896"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect width="64" height="64" rx="14" ry="14" fill="url(#bg)"/>
+  <!-- Graduation cap: mortarboard top -->
+  <polygon points="32,14 56,24 32,34 8,24" fill="url(#cap)"/>
+  <!-- Cap base / body -->
+  <path d="M20,27 L20,40 Q32,47 44,40 L44,27 L32,34 Z" fill="url(#cap)" opacity="0.85"/>
+  <!-- Tassel string -->
+  <line x1="56" y1="24" x2="56" y2="38" stroke="#00c9b1" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Tassel ball -->
+  <circle cx="56" cy="40" r="3" fill="#00c9b1"/>
+</svg>
