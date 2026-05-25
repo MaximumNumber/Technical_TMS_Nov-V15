@@ -1,0 +1,924 @@
+{% extends 'base.html' %}
+{% block title %}لوحة التحليلات الشاملة{% endblock %}
+{% block page_title %}التحليلات{% endblock %}
+{% block extra_css %}
+<style>
+  .kpi-row-wrap { display: grid; grid-template-columns: repeat(6,1fr); gap: 0.85rem; margin-bottom: 1.25rem; }
+  @media (max-width:1200px) { .kpi-row-wrap { grid-template-columns: repeat(4,1fr); } }
+  @media (max-width:768px)  { .kpi-row-wrap { grid-template-columns: repeat(3,1fr); } }
+  @media (max-width:480px)  { .kpi-row-wrap { grid-template-columns: repeat(2,1fr); } }
+
+  .kpi-mini {
+    background: linear-gradient(140deg, #0b3d4e, #146b7a);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    cursor: default;
+  }
+  .kpi-mini::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02));
+    pointer-events: none;
+  }
+  .kpi-mini::after {
+    content: '';
+    position: absolute;
+    bottom: -25px; left: -25px;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    pointer-events: none;
+  }
+  .kpi-mini:hover { transform: translateY(-5px) scale(1.03); }
+  .kpi-mini.amber  { background: linear-gradient(140deg,#9a5b00,#e8941a); }
+  .kpi-mini.green  { background: linear-gradient(140deg,#1a7a42,#2ecc71); }
+  .kpi-mini.red    { background: linear-gradient(140deg,#9b2020,#e74c3c); }
+  .kpi-mini.purple { background: linear-gradient(140deg,#6c3483,#9b59b6); }
+  .kpi-mini.teal   { background: linear-gradient(140deg,#0e7a72,#1abc9c); }
+  .kpi-mini.blue   { background: linear-gradient(140deg,#1a5276,#2980b9); }
+  .kpi-mini.dark   { background: linear-gradient(140deg,#1c2a36,#4a6274); }
+  .kpi-mini.orange { background: linear-gradient(140deg,#7a3d00,#e67e22); }
+  .kpi-mini.indigo { background: linear-gradient(140deg,#283092,#3d4cb0); }
+  .kpi-mini.rose   { background: linear-gradient(140deg,#be1234,#f43f5e); }
+  .kpi-mini.gold   { background: linear-gradient(140deg,#8a5800,#d4890a); }
+  .kpi-mini.cyan   { background: linear-gradient(140deg,#006b6b,#00b5d8); }
+
+  .kpi-mini-icon {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    background: rgba(255,255,255,0.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem;
+    margin-bottom: 0.65rem;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: transform 0.3s;
+  }
+  .kpi-mini:hover .kpi-mini-icon { transform: scale(1.12) rotate(5deg); }
+  .kpi-mini-value { font-size: 1.85rem; font-weight: 900; line-height: 1; letter-spacing: -1.5px; position: relative; }
+  .kpi-mini-label { font-size: 0.7rem; opacity: 0.82; margin-top: 0.2rem; font-weight: 600; position: relative; }
+
+  /* Chart cards */
+  .chart-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid rgba(12,52,78,0.07);
+    padding: 1.3rem 1.5rem;
+    height: 100%;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .chart-card:hover { box-shadow: 0 8px 36px rgba(0,0,0,0.10); transform: translateY(-2px); }
+  .chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #146b7a, #00d4be, #146b7a);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .chart-card:hover::before { opacity: 1; }
+  .chart-card-title {
+    font-size: 0.87rem;
+    font-weight: 800;
+    color: #0a3341;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .chart-card-title .title-left { display: flex; align-items: center; gap: 0.5rem; }
+  .chart-card-title .title-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    color: #fff;
+  }
+
+  /* Usage bars */
+  .usage-item {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(12,52,78,0.05);
+  }
+  .usage-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .usage-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem; }
+  .usage-name { font-size: 0.8rem; color: #1a3a46; font-weight: 600; }
+  .usage-count { font-size: 0.78rem; color: #146b7a; font-weight: 800; }
+  .usage-track { height: 8px; border-radius: 4px; background: #edf2f7; overflow: hidden; }
+  .usage-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .usage-fill.teal   { background: linear-gradient(90deg, #146b7a, #00d4be); }
+  .usage-fill.amber  { background: linear-gradient(90deg, #d97706, #f59e0b); }
+
+  /* Summary strip */
+  .summary-strip-v2 {
+    background: linear-gradient(140deg, #0a3341, #146b7a);
+    border-radius: 16px;
+    padding: 1.2rem 1.6rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    box-shadow: 0 8px 28px rgba(10,51,65,0.28);
+    position: relative;
+    overflow: hidden;
+  }
+  .summary-strip-v2::before {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+  .summary-strip-v2::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 80px;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: rgba(0,212,190,0.06);
+    pointer-events: none;
+  }
+  .s-item { display: flex; flex-direction: column; position: relative; z-index: 1; }
+  .s-label { font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; }
+  .s-val { font-size: 1.25rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+  .s-sep { width: 1px; background: rgba(255,255,255,0.1); align-self: stretch; }
+
+  /* Filter bar */
+  .analytics-filter {
+    background: #fff;
+    border-radius: 14px;
+    padding: 0.9rem 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    border: 1px solid rgba(12,52,78,0.07);
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  }
+
+  /* Conflict banner */
+  .conflict-banner {
+    background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));
+    border: 1.5px solid rgba(239,68,68,0.2);
+    border-right: 4px solid #ef4444;
+    border-radius: 12px;
+    padding: 0.85rem 1.1rem;
+    color: #991b1b;
+    font-size: 0.87rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  /* Info college banner */
+  .college-banner {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.02));
+    border: 1px solid rgba(59,130,246,0.2);
+    border-right: 3px solid #3b82f6;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    color: #1e40af;
+    font-size: 0.86rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  /* Util badge */
+  .util-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15em 0.6em; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+  .util-low  { background: #fee2e2; color: #991b1b; }
+  .util-mid  { background: #fef3c7; color: #92400e; }
+  .util-high { background: #d1fae5; color: #065f46; }
+
+  /* Legend */
+  .chart-legend { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 0.6rem; }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.74rem; color: #5a7a84; font-weight: 600; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* Back button */
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 0.42rem;
+    background: #fff; border: 1.5px solid rgba(12,52,78,0.1);
+    border-radius: 10px; padding: 0.45rem 1rem;
+    font-size: 0.82rem; font-weight: 700; color: #5a7a84;
+    text-decoration: none; transition: all 0.22s;
+  }
+  .back-btn:hover { background: rgba(20,107,122,0.05); border-color: rgba(20,107,122,0.2); color: #146b7a; transform: translateX(3px); }
+
+  /* Dark mode */
+  body.dark .chart-card { background: var(--c-surface); border-color: var(--c-border); }
+  body.dark .chart-card-title { color: var(--c-primary-mid); }
+  body.dark .kpi-mini { filter: brightness(0.88); }
+  body.dark .summary-strip-v2 { filter: brightness(0.85); }
+  body.dark .analytics-filter { background: var(--c-surface); border-color: var(--c-border); }
+  body.dark .usage-name { color: var(--c-primary-mid); }
+  body.dark .usage-track { background: rgba(255,255,255,0.07); }
+  body.dark .back-btn { background: var(--c-surface-2); border-color: var(--c-border); color: var(--c-primary-mid); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page header -->
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-chart-bar"></i></div>
+    <div>
+      <h4>لوحة التحليلات الشاملة</h4>
+      <div class="page-header-sub">إحصاءات ومؤشرات أداء الجداول الدراسية</div>
+    </div>
+  </div>
+  <a href="{% if is_system_manager %}{% url 'system_manager_dashboard' %}{% else %}{% url 'college_manager_dashboard' %}{% endif %}" class="back-btn">
+    <i class="fas fa-arrow-right"></i> رجوع
+  </a>
+</div>
+
+<!-- Filter (system manager only) -->
+{% if is_system_manager %}
+<div class="analytics-filter fade-in-up">
+  <form method="get" class="d-flex align-items-center gap-2 flex-wrap w-100">
+    <span style="font-size:0.82rem;font-weight:700;color:#4a6872;white-space:nowrap;"><i class="fas fa-building me-1" style="color:#146b7a;"></i> تصفية حسب الكلية:</span>
+    <select name="college_id" class="form-select form-select-sm" style="width:auto;min-width:180px;" onchange="this.form.submit()">
+      <option value="">جميع الكليات</option>
+      {% for c in colleges %}<option value="{{ c.id }}" {% if selected_college_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+    {% if selected_college_id %}
+    <a href="{% url 'analytics_dashboard' %}" class="btn btn-xs btn-outline-danger"><i class="fas fa-times me-1"></i>إلغاء</a>
+    {% endif %}
+  </form>
+</div>
+{% endif %}
+
+{% if college %}
+<div class="college-banner fade-in-up"><i class="fas fa-building"></i><strong>كلية:</strong> {{ college.name }}</div>
+{% endif %}
+
+<!-- Summary strip -->
+{% if analytics.total_sessions > 0 %}
+<div class="summary-strip-v2 fade-in-up">
+  <div class="s-item">
+    <span class="s-label">إجمالي الجلسات</span>
+    <span class="s-val">{{ analytics.total_sessions }}</span>
+  </div>
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">المحاضرات</span>
+    <span class="s-val">{{ analytics.total_lectures }}</span>
+  </div>
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">المعامل</span>
+    <span class="s-val">{{ analytics.total_labs }}</span>
+  </div>
+  {% if analytics.busiest_day %}
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">أكثر الأيام ازدحاماً</span>
+    <span class="s-val">{{ analytics.busiest_day }} ({{ analytics.busiest_day_count }})</span>
+  </div>
+  {% endif %}
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">متوسط جلسات/أستاذ</span>
+    <span class="s-val">{{ analytics.avg_hours_per_professor }}</span>
+  </div>
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">متوسط استخدام القاعات</span>
+    <span class="s-val">{{ analytics.rooms_util_avg }}%</span>
+  </div>
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">متوسط استخدام المعامل</span>
+    <span class="s-val">{{ analytics.halls_util_avg }}%</span>
+  </div>
+  {% if analytics.conflicts_count > 0 %}
+  <div class="s-sep"></div>
+  <div class="s-item">
+    <span class="s-label">تعارضات</span>
+    <span class="s-val" style="color:#f6aa24;">{{ analytics.conflicts_count }}</span>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if analytics.conflicts_count > 0 %}
+<div class="conflict-banner fade-in-up">
+  <i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:1.1rem;"></i>
+  تم اكتشاف <strong>{{ analytics.conflicts_count }}</strong> تعارض في الجدول — يرجى المراجعة وحل التعارضات.
+</div>
+{% endif %}
+
+<!-- KPI Grid Row 1 -->
+<div class="kpi-row-wrap fade-in-up fade-in-up-1">
+  <div class="kpi-mini">
+    <div class="kpi-mini-icon"><i class="fas fa-calendar-check"></i></div>
+    <div class="kpi-mini-value">{{ analytics.total_sessions }}</div>
+    <div class="kpi-mini-label">إجمالي الجلسات</div>
+  </div>
+  <div class="kpi-mini amber">
+    <div class="kpi-mini-icon"><i class="fas fa-chalkboard"></i></div>
+    <div class="kpi-mini-value">{{ analytics.total_lectures }}</div>
+    <div class="kpi-mini-label">محاضرات</div>
+  </div>
+  <div class="kpi-mini orange">
+    <div class="kpi-mini-icon"><i class="fas fa-flask"></i></div>
+    <div class="kpi-mini-value">{{ analytics.total_labs }}</div>
+    <div class="kpi-mini-label">معامل</div>
+  </div>
+  <div class="kpi-mini green">
+    <div class="kpi-mini-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+    <div class="kpi-mini-value">{{ analytics.active_professors }}</div>
+    <div class="kpi-mini-label">أساتذة نشطون</div>
+  </div>
+  <div class="kpi-mini purple">
+    <div class="kpi-mini-icon"><i class="fas fa-sitemap"></i></div>
+    <div class="kpi-mini-value">{{ analytics.total_departments }}</div>
+    <div class="kpi-mini-label">أقسام</div>
+  </div>
+  <div class="kpi-mini {% if analytics.conflicts_count > 0 %}red{% else %}teal{% endif %}">
+    <div class="kpi-mini-icon"><i class="fas fa-exclamation-triangle"></i></div>
+    <div class="kpi-mini-value">{{ analytics.conflicts_count }}</div>
+    <div class="kpi-mini-label">تعارضات</div>
+  </div>
+</div>
+
+<!-- KPI Grid Row 2 -->
+<div class="kpi-row-wrap fade-in-up fade-in-up-2">
+  <div class="kpi-mini red">
+    <div class="kpi-mini-icon"><i class="fas fa-door-open"></i></div>
+    <div class="kpi-mini-value">{{ analytics.total_rooms }}</div>
+    <div class="kpi-mini-label">قاعات دراسية</div>
+  </div>
+  <div class="kpi-mini blue">
+    <div class="kpi-mini-icon"><i class="fas fa-microscope"></i></div>
+    <div class="kpi-mini-value">{{ analytics.total_halls }}</div>
+    <div class="kpi-mini-label">معامل مسجّلة</div>
+  </div>
+  <div class="kpi-mini dark">
+    <div class="kpi-mini-icon"><i class="fas fa-door-closed"></i></div>
+    <div class="kpi-mini-value">{{ analytics.unused_rooms }}</div>
+    <div class="kpi-mini-label">قاعات غير مستخدمة</div>
+  </div>
+  <div class="kpi-mini dark">
+    <div class="kpi-mini-icon"><i class="fas fa-flask" style="opacity:0.6;"></i></div>
+    <div class="kpi-mini-value">{{ analytics.unused_halls }}</div>
+    <div class="kpi-mini-label">معامل غير مستخدمة</div>
+  </div>
+  <div class="kpi-mini green">
+    <div class="kpi-mini-icon"><i class="fas fa-user-clock"></i></div>
+    <div class="kpi-mini-value">{{ analytics.avg_hours_per_professor }}</div>
+    <div class="kpi-mini-label">متوسط جلسات/أستاذ</div>
+  </div>
+  {% if analytics.busiest_day %}
+  <div class="kpi-mini cyan">
+    <div class="kpi-mini-icon"><i class="fas fa-calendar-day"></i></div>
+    <div class="kpi-mini-value" style="font-size:1.25rem;">{{ analytics.busiest_day }}</div>
+    <div class="kpi-mini-label">أكثر الأيام ازدحاماً</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Charts Row 1: Day distribution + Session types -->
+<div class="row g-3 mb-3 fade-in-up fade-in-up-3">
+  <div class="col-xl-8">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#146b7a,#1c96ab);"><i class="fas fa-calendar-week"></i></div>
+          توزيع الجلسات حسب اليوم
+        </div>
+        <span class="util-badge util-high" style="font-size:0.68rem;">{{ analytics.total_sessions }} جلسة</span>
+      </div>
+      {% if analytics.day_lecture_counts or analytics.day_lab_counts %}
+      <canvas id="dayDistChart" height="85"></canvas>
+      <div class="chart-legend mt-2">
+        <div class="legend-item"><div class="legend-dot" style="background:#146b7a;"></div>محاضرات</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f6aa24;"></div>معامل</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:3rem 1rem;">
+        <i class="fas fa-chart-bar"></i>
+        <h6>لا توجد بيانات كافية</h6>
+        <p>يرجى إضافة جلسات للعرض هنا</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b);"><i class="fas fa-chart-pie"></i></div>
+          توزيع أنواع الجلسات
+        </div>
+      </div>
+      {% if analytics.total_lectures > 0 or analytics.total_labs > 0 %}
+      <div style="position:relative;height:210px;margin:0 auto;max-width:220px;">
+        <canvas id="lectureTypeChart"></canvas>
+      </div>
+      <div class="chart-legend justify-content-center mt-2">
+        <div class="legend-item"><div class="legend-dot" style="background:#146b7a;"></div>محاضرات: <strong>{{ analytics.total_lectures }}</strong></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f6aa24;"></div>معامل: <strong>{{ analytics.total_labs }}</strong></div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:2.5rem 1rem;"><i class="fas fa-chart-pie"></i><p>لا توجد بيانات</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 2: Room + Hall utilization -->
+<div class="row g-3 mb-3 fade-in-up" style="animation-delay:0.15s">
+  <div class="col-xl-6">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#146b7a,#00d4be);"><i class="fas fa-door-open"></i></div>
+          استخدام القاعات الدراسية
+        </div>
+        <span class="util-badge {% if analytics.rooms_util_avg < 30 %}util-low{% elif analytics.rooms_util_avg < 60 %}util-mid{% else %}util-high{% endif %}">
+          معدل: {{ analytics.rooms_util_avg }}%
+        </span>
+      </div>
+      {% if analytics.room_utilization %}
+      {% for room in analytics.room_utilization|slice:":9" %}
+      <div class="usage-item">
+        <div class="usage-row">
+          <span class="usage-name">{{ room.name }}</span>
+          <span class="usage-count">{{ room.sessions }} جلسة</span>
+        </div>
+        <div class="usage-track"><div class="usage-fill teal" style="width:{{ room.utilization_pct }}%"></div></div>
+      </div>
+      {% endfor %}
+      {% if analytics.unused_rooms > 0 %}
+      <div style="margin-top:0.6rem;font-size:0.76rem;color:#dc2626;font-weight:600;display:flex;align-items:center;gap:0.4rem;">
+        <i class="fas fa-exclamation-circle"></i> {{ analytics.unused_rooms }} قاعة غير مستخدمة
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="empty-state" style="padding:2rem;"><i class="fas fa-door-closed"></i><p>لا توجد بيانات</p></div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-xl-6">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b);"><i class="fas fa-flask"></i></div>
+          استخدام المعامل
+        </div>
+        <span class="util-badge {% if analytics.halls_util_avg < 30 %}util-low{% elif analytics.halls_util_avg < 60 %}util-mid{% else %}util-high{% endif %}">
+          معدل: {{ analytics.halls_util_avg }}%
+        </span>
+      </div>
+      {% if analytics.hall_utilization %}
+      {% for hall in analytics.hall_utilization|slice:":9" %}
+      <div class="usage-item">
+        <div class="usage-row">
+          <span class="usage-name">{{ hall.name }}</span>
+          <span class="usage-count" style="color:#d97706;">{{ hall.sessions }} جلسة</span>
+        </div>
+        <div class="usage-track"><div class="usage-fill amber" style="width:{{ hall.utilization_pct }}%"></div></div>
+      </div>
+      {% endfor %}
+      {% if analytics.unused_halls > 0 %}
+      <div style="margin-top:0.6rem;font-size:0.76rem;color:#dc2626;font-weight:600;display:flex;align-items:center;gap:0.4rem;">
+        <i class="fas fa-exclamation-circle"></i> {{ analytics.unused_halls }} معمل غير مستخدم
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="empty-state" style="padding:2rem;"><i class="fas fa-flask"></i><p>لا توجد بيانات</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 3: Professor load + Department pressure -->
+<div class="row g-3 mb-3 fade-in-up" style="animation-delay:0.25s">
+  <div class="col-xl-6">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#6c3483,#9b59b6);"><i class="fas fa-chalkboard-teacher"></i></div>
+          الأساتذة الأعلى عبئاً تدريسياً
+        </div>
+        <small style="color:#8a9ba5;font-size:0.7rem;">متوسط: {{ analytics.avg_hours_per_professor }} جلسة/أستاذ</small>
+      </div>
+      {% if analytics.top_professors %}
+      <canvas id="professorLoadChart" height="130"></canvas>
+      <div class="chart-legend mt-2">
+        <div class="legend-item"><div class="legend-dot" style="background:#146b7a;"></div>محاضرات</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f6aa24;"></div>معامل</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:2.5rem;"><i class="fas fa-chalkboard-teacher"></i><p>لا توجد بيانات</p></div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-xl-6">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#2c9aaa,#1abc9c);"><i class="fas fa-sitemap"></i></div>
+          الأقسام الأكثر جلسات
+        </div>
+      </div>
+      {% if analytics.top_departments %}
+      <canvas id="deptPressureChart" height="130"></canvas>
+      <div class="chart-legend mt-2">
+        <div class="legend-item"><div class="legend-dot" style="background:#2c9aaa;"></div>محاضرات</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b59b6;"></div>معامل</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:2.5rem;"><i class="fas fa-sitemap"></i><p>لا توجد بيانات</p></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row 4: Total daily sparkline -->
+{% if analytics.total_sessions > 0 %}
+<div class="row g-3 mb-3 fade-in-up" style="animation-delay:0.35s">
+  <div class="col-12">
+    <div class="chart-card">
+      <div class="chart-card-title">
+        <div class="title-left">
+          <div class="title-icon" style="background:linear-gradient(135deg,#0e7a72,#1abc9c);"><i class="fas fa-chart-area"></i></div>
+          إجمالي الجلسات اليومية (محاضرات + معامل)
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span class="util-badge util-high">إجمالي: {{ analytics.total_sessions }}</span>
+        </div>
+      </div>
+      <canvas id="totalDayChart" height="55"></canvas>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Quick stats summary row -->
+<div class="row g-3 fade-in-up" style="animation-delay:0.45s">
+  <div class="col-md-4">
+    <div class="chart-card" style="text-align:center;padding:1.5rem;">
+      <div style="font-size:2rem;margin-bottom:0.5rem;color:#146b7a;"><i class="fas fa-chart-line"></i></div>
+      <div style="font-size:0.75rem;color:#8a9ba5;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">نسبة استخدام القاعات</div>
+      <div style="font-size:2rem;font-weight:900;color:#146b7a;letter-spacing:-1px;margin:0.3rem 0;">{{ analytics.rooms_util_avg }}%</div>
+      <div class="usage-track" style="margin-top:0.5rem;height:10px;border-radius:5px;">
+        <div class="usage-fill teal" style="width:{{ analytics.rooms_util_avg }}%"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="chart-card" style="text-align:center;padding:1.5rem;">
+      <div style="font-size:2rem;margin-bottom:0.5rem;color:#d97706;"><i class="fas fa-flask"></i></div>
+      <div style="font-size:0.75rem;color:#8a9ba5;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">نسبة استخدام المعامل</div>
+      <div style="font-size:2rem;font-weight:900;color:#d97706;letter-spacing:-1px;margin:0.3rem 0;">{{ analytics.halls_util_avg }}%</div>
+      <div class="usage-track" style="margin-top:0.5rem;height:10px;border-radius:5px;">
+        <div class="usage-fill amber" style="width:{{ analytics.halls_util_avg }}%"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="chart-card" style="text-align:center;padding:1.5rem;">
+      <div style="font-size:2rem;margin-bottom:0.5rem;color:#146b7a;"><i class="fas fa-bolt"></i></div>
+      <div style="font-size:0.75rem;color:#8a9ba5;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">كثافة الجدول</div>
+      <div style="font-size:2rem;font-weight:900;color:{% if analytics.conflicts_count > 0 %}#dc2626{% else %}#22c55e{% endif %};letter-spacing:-1px;margin:0.3rem 0;">
+        {% if analytics.conflicts_count > 0 %}⚠ {{ analytics.conflicts_count }}{% else %}جيد ✓{% endif %}
+      </div>
+      <div style="font-size:0.8rem;color:#8a9ba5;margin-top:0.3rem;">
+        {% if analytics.conflicts_count > 0 %}تعارضات تحتاج مراجعة{% else %}لا توجد تعارضات{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Global Chart Defaults ──
+Chart.defaults.font.family = "'Tajawal','Segoe UI',sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#5a7a84';
+Chart.defaults.animation.duration = 900;
+Chart.defaults.animation.easing = 'easeOutQuart';
+
+const tmsColor   = '#146b7a';
+const accentColor= '#f6aa24';
+const teal2      = '#00d4be';
+const purpleColor= '#9b59b6';
+const blueColor  = '#2980b9';
+const greenColor = '#27ae60';
+const redColor   = '#e74c3c';
+
+// ── Tooltip plugin ──
+const tooltipPlugin = {
+  backgroundColor: 'rgba(10,51,65,0.92)',
+  titleColor: '#fff',
+  bodyColor: 'rgba(255,255,255,0.82)',
+  padding: 12,
+  cornerRadius: 10,
+  borderColor: 'rgba(0,212,190,0.35)',
+  borderWidth: 1,
+  displayColors: true,
+  boxPadding: 4,
+  titleFont: { weight: '700', size: 12 },
+  bodyFont: { size: 11 },
+};
+
+// ── Gradient helper ──
+function makeGradient(ctx, color1, color2, alpha1, alpha2) {
+  const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+  gradient.addColorStop(0, color1.replace(')', `,${alpha1})`).replace('rgb', 'rgba').replace('rgba(rgba', 'rgba'));
+  gradient.addColorStop(1, color2.replace(')', `,${alpha2})`).replace('rgb', 'rgba').replace('rgba(rgba', 'rgba'));
+  return gradient;
+}
+
+// ── Day Distribution Chart ──
+const dayCtx = document.getElementById('dayDistChart');
+if (dayCtx) {
+  const ctx = dayCtx.getContext('2d');
+  const bgTeal = ctx.createLinearGradient(0, 0, 0, 200);
+  bgTeal.addColorStop(0, 'rgba(20,107,122,0.9)');
+  bgTeal.addColorStop(1, 'rgba(20,107,122,0.7)');
+  const bgAmber = ctx.createLinearGradient(0, 0, 0, 200);
+  bgAmber.addColorStop(0, 'rgba(246,170,36,0.9)');
+  bgAmber.addColorStop(1, 'rgba(246,170,36,0.7)');
+
+  new Chart(dayCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ analytics.day_names|safe }},
+      datasets: [
+        {
+          label: 'محاضرات',
+          data: {{ analytics.day_lecture_counts|safe }},
+          backgroundColor: bgTeal,
+          borderRadius: { topLeft: 6, topRight: 6 },
+          borderSkipped: false,
+          borderWidth: 0,
+        },
+        {
+          label: 'معامل',
+          data: {{ analytics.day_lab_counts|safe }},
+          backgroundColor: bgAmber,
+          borderRadius: { topLeft: 6, topRight: 6 },
+          borderSkipped: false,
+          borderWidth: 0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipPlugin,
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { weight: '600', size: 12 } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(12,52,78,0.06)', drawBorder: false },
+          border: { display: false },
+          ticks: { stepSize: 1, font: { size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+// ── Session Type Donut ──
+const typeCtx = document.getElementById('lectureTypeChart');
+if (typeCtx) {
+  const lbl = {{ analytics.lecture_type_dist_labels|safe }};
+  const val = {{ analytics.lecture_type_dist_values|safe }};
+  const allData = val.length ? val : [{{ analytics.total_lectures }}, {{ analytics.total_labs }}];
+  const allLabels = lbl.length ? lbl : ['محاضرات','معامل'];
+  const colors = [tmsColor, accentColor, teal2, purpleColor, blueColor, greenColor, redColor];
+
+  if (allData.some(v => v > 0)) {
+    new Chart(typeCtx, {
+      type: 'doughnut',
+      data: {
+        labels: allLabels,
+        datasets: [{
+          data: allData,
+          backgroundColor: colors.slice(0, allData.length),
+          borderWidth: 3,
+          borderColor: '#fff',
+          hoverOffset: 10,
+          hoverBorderWidth: 3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...tooltipPlugin,
+            callbacks: {
+              label: function(context) {
+                const total = context.dataset.data.reduce((a,b) => a+b, 0);
+                const pct = total > 0 ? Math.round(context.parsed / total * 100) : 0;
+                return ` ${context.label}: ${context.parsed} (${pct}%)`;
+              }
+            }
+          },
+        }
+      }
+    });
+  }
+}
+
+// ── Professor Load (Stacked Bar) ──
+const profCtx = document.getElementById('professorLoadChart');
+if (profCtx) {
+  const pd = {{ analytics.top_professors|safe }};
+  if (pd.length) {
+    new Chart(profCtx, {
+      type: 'bar',
+      data: {
+        labels: pd.map(p => p.name.length > 16 ? p.name.substring(0,16)+'…' : p.name),
+        datasets: [
+          {
+            label: 'محاضرات',
+            data: pd.map(p => p.lectures),
+            backgroundColor: 'rgba(20,107,122,0.85)',
+            borderRadius: { topLeft: 5, topRight: 5 },
+            borderSkipped: false,
+          },
+          {
+            label: 'معامل',
+            data: pd.map(p => p.labs),
+            backgroundColor: 'rgba(246,170,36,0.85)',
+            borderRadius: { topLeft: 5, topRight: 5 },
+            borderSkipped: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: tooltipPlugin,
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { size: 10, weight: '600' } }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            grid: { color: 'rgba(12,52,78,0.06)', drawBorder: false },
+            border: { display: false },
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
+  }
+}
+
+// ── Department Pressure (Horizontal Bar) ──
+const deptCtx = document.getElementById('deptPressureChart');
+if (deptCtx) {
+  const dd = {{ analytics.top_departments|safe }};
+  if (dd.length) {
+    new Chart(deptCtx, {
+      type: 'bar',
+      data: {
+        labels: dd.map(d => d.name.length > 20 ? d.name.substring(0,20)+'…' : d.name),
+        datasets: [
+          {
+            label: 'محاضرات',
+            data: dd.map(d => d.lectures),
+            backgroundColor: 'rgba(44,154,170,0.85)',
+            borderRadius: 5,
+          },
+          {
+            label: 'معامل',
+            data: dd.map(d => d.labs),
+            backgroundColor: 'rgba(155,89,182,0.85)',
+            borderRadius: 5,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: tooltipPlugin,
+        },
+        scales: {
+          x: {
+            stacked: true,
+            beginAtZero: true,
+            grid: { color: 'rgba(12,52,78,0.06)', drawBorder: false },
+            border: { display: false },
+          },
+          y: {
+            stacked: true,
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { size: 10, weight: '600' } }
+          }
+        }
+      }
+    });
+  }
+}
+
+// ── Total Daily Sparkline (Area Line) ──
+const totalDayCtx = document.getElementById('totalDayChart');
+if (totalDayCtx) {
+  const totals = {{ analytics.day_totals|safe }};
+  const names  = {{ analytics.day_names|safe }};
+  const ctx = totalDayCtx.getContext('2d');
+  const areaGrad = ctx.createLinearGradient(0, 0, 0, 120);
+  areaGrad.addColorStop(0, 'rgba(20,107,122,0.24)');
+  areaGrad.addColorStop(1, 'rgba(20,107,122,0.01)');
+
+  new Chart(totalDayCtx, {
+    type: 'line',
+    data: {
+      labels: names,
+      datasets: [{
+        label: 'إجمالي الجلسات',
+        data: totals,
+        fill: true,
+        backgroundColor: areaGrad,
+        borderColor: tmsColor,
+        borderWidth: 2.5,
+        pointBackgroundColor: '#fff',
+        pointBorderColor: tmsColor,
+        pointBorderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: tmsColor,
+        pointHoverBorderColor: '#fff',
+        tension: 0.42,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipPlugin,
+          callbacks: { label: ctx => ` ${ctx.parsed.y} جلسة` }
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { font: { weight: '600' } }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: 'rgba(12,52,78,0.06)', drawBorder: false },
+          border: { display: false },
+          ticks: { stepSize: 1 }
+        }
+      }
+    }
+  });
+}
+
+// Animate usage bars on load
+document.querySelectorAll('.usage-fill').forEach(function(bar) {
+  const w = bar.style.width;
+  bar.style.width = '0';
+  setTimeout(function() { bar.style.width = w; }, 300);
+});
+</script>
+{% endblock %}

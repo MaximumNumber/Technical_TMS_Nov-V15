@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% block title %}الإشعارات{% endblock %}
+{% block page_title %}مركز الإشعارات{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notif-toolbar {
+    display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    background: var(--c-surface); border: 1.5px solid var(--c-border);
+    border-radius: 14px; padding: 0.85rem 1.1rem; margin-bottom: 1.1rem;
+  }
+  .notif-toolbar .select-all-wrap { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--c-text-muted); cursor: pointer; }
+  .notif-toolbar .divider { width: 1px; height: 24px; background: var(--c-border); margin: 0 0.25rem; }
+  .btn-mark-smart {
+    font-size: 0.82rem; padding: 0.42rem 1rem; border-radius: 8px;
+    background: linear-gradient(135deg, #17616c, #1a7a8a); color: #fff;
+    border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;
+    transition: opacity 0.2s; font-weight: 600;
+  }
+  .btn-mark-smart:hover { opacity: 0.88; }
+  .btn-mark-smart:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-delete-selected {
+    font-size: 0.82rem; padding: 0.42rem 1rem; border-radius: 8px;
+    background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff;
+    border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;
+    transition: opacity 0.2s; font-weight: 600; margin-right: auto;
+  }
+  .btn-delete-selected:hover { opacity: 0.88; }
+  .btn-delete-selected:disabled { opacity: 0.4; cursor: not-allowed; }
+  .notif-list-item {
+    background: var(--c-surface); border-radius: 14px; padding: 1rem 1.25rem;
+    margin-bottom: 0.65rem; display: flex; align-items: flex-start; gap: 0.9rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-right: 4px solid var(--c-border);
+    transition: all 0.22s ease; position: relative; cursor: pointer;
+  }
+  .notif-list-item.unread {
+    border-right-color: #17616c;
+    background: linear-gradient(135deg, rgba(23,97,108,0.07), rgba(23,97,108,0.03));
+  }
+  .notif-list-item.unread::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #17616c, #00c9b1); border-radius: 14px 14px 0 0;
+  }
+  .notif-list-item:hover { transform: translateX(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.09); }
+  .notif-list-item.selected { outline: 2px solid #17616c; background: rgba(23,97,108,0.08) !important; }
+  .notif-cb { width: 17px; height: 17px; margin-top: 4px; flex-shrink: 0; accent-color: #17616c; cursor: pointer; }
+  .notif-dot { width: 9px; height: 9px; background: #17616c; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+  .notif-dot.invisible { opacity: 0; }
+  .notif-icon-wrap { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; }
+  .notif-icon-wrap.unread { background: linear-gradient(135deg, #17616c, #1a7a8a); color: #fff; }
+  .notif-icon-wrap.read   { background: var(--c-surface-2); color: #a0b8c1; }
+  .notif-content { flex: 1; min-width: 0; }
+  .notif-subject { font-size: 0.87rem; font-weight: 700; color: var(--c-text); margin-bottom: 0.18rem; }
+  .notif-list-item.unread .notif-subject { color: #0a3341; }
+  .notif-message { font-size: 0.84rem; color: var(--c-text-muted); line-height: 1.55; }
+  .notif-list-item.unread .notif-message { color: #2a4a55; font-weight: 500; }
+  .notif-meta { font-size: 0.71rem; color: #9ab0ba; margin-top: 0.3rem; }
+  .notif-read-badge { font-size: 0.68rem; color: #2ecc71; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
+  .notif-empty { text-align: center; padding: 4rem 1rem; }
+  .notif-empty .empty-icon { width: 80px; height: 80px; background: linear-gradient(135deg,#e8f6f8,#d0eef4); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 2rem; color: #17616c; opacity: 0.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-bell"></i></div>
+    <div>
+      <h4>مركز الإشعارات</h4>
+      <div class="page-header-sub" id="headerSubText">
+        {% if unread_count > 0 %}
+          <span style="color:#17616c;font-weight:600;">{{ unread_count }} إشعار غير مقروء</span>
+        {% else %}
+          جميع الإشعارات مقروءة
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if notifications %}
+<div class="notif-toolbar fade-in-up" id="notifToolbar">
+  <label class="select-all-wrap">
+    <input type="checkbox" id="selectAllCb" style="accent-color:#17616c;width:16px;height:16px;">
+    <span>تحديد الكل</span>
+  </label>
+  <div class="divider"></div>
+  <button class="btn-mark-smart" id="btnMarkSmart" onclick="markSmart()" disabled>
+    <i class="fas fa-check-double"></i>
+    <span id="btnMarkLabel">تحديد كمقروء</span>
+  </button>
+  <button class="btn-delete-selected" id="btnDelete" onclick="deleteSelected()" disabled>
+    <i class="fas fa-trash-alt"></i>
+    <span id="btnDeleteLabel">حذف المحدد</span>
+  </button>
+</div>
+
+<div id="notifList" class="fade-in-up fade-in-up-1">
+  {% for notif in notifications %}
+  <div class="notif-list-item {% if not notif.is_read %}unread{% endif %}"
+       id="notif-{{ notif.id }}" data-read="{{ notif.is_read|yesno:'true,false' }}"
+       onclick="toggleSelect({{ notif.id }}, this)">
+    <input type="checkbox" class="notif-cb" data-id="{{ notif.id }}" data-read="{{ notif.is_read|yesno:'true,false' }}"
+           onclick="event.stopPropagation(); cbChanged({{ notif.id }}, this);">
+    <div class="notif-dot {% if notif.is_read %}invisible{% endif %}" id="dot-{{ notif.id }}"></div>
+    <div class="notif-icon-wrap {% if not notif.is_read %}unread{% else %}read{% endif %}" id="icon-{{ notif.id }}">
+      <i class="fas fa-bell"></i>
+    </div>
+    <div class="notif-content">
+      {% if notif.subject %}<div class="notif-subject">{{ notif.subject }}</div>{% endif %}
+      <div class="notif-message">{{ notif.message }}</div>
+      <div class="notif-meta">
+        <i class="fas fa-clock me-1"></i>{{ notif.created_at|date:"Y-m-d H:i" }}
+        {% if notif.is_read %}&nbsp;·&nbsp;<span class="notif-read-badge"><i class="fas fa-check-double"></i> مقروء</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="notif-empty fade-in-up" id="emptyState">
+  <div class="empty-icon"><i class="fas fa-bell-slash"></i></div>
+  <div style="font-size:1.1rem;font-weight:700;color:#5a7a84;margin-bottom:0.4rem;">لا توجد إشعارات</div>
+  <div style="font-size:0.85rem;color:#9ab0ba;">ستظهر هنا إشعاراتك الجديدة عند وصولها</div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var MARK_READ_URL = "{% url 'notifications_mark_read' %}";
+var DELETE_URL = "{% url 'notifications_delete' %}";
+var CSRF = "{{ csrf_token }}";
+var selectedIds = new Set();
+
+function updateSelectedUI() {
+  var count = selectedIds.size;
+  var hasUnreadSelected = false;
+  selectedIds.forEach(function(id) {
+    var item = document.getElementById('notif-' + id);
+    if (item && item.dataset.read === 'false') hasUnreadSelected = true;
+  });
+  var btnMark = document.getElementById('btnMarkSmart');
+  var btnDel = document.getElementById('btnDelete');
+  if (btnMark) btnMark.disabled = !(count > 0 && hasUnreadSelected);
+  if (btnDel) btnDel.disabled = count === 0;
+  var labelMark = document.getElementById('btnMarkLabel');
+  if (labelMark) labelMark.textContent = (count > 0 && hasUnreadSelected) ? 'تحديد المحدد (' + count + ') كمقروء' : 'تحديد كمقروء';
+  var labelDel = document.getElementById('btnDeleteLabel');
+  if (labelDel) labelDel.textContent = count > 0 ? 'حذف المحدد (' + count + ')' : 'حذف المحدد';
+  var totalCbs = document.querySelectorAll('.notif-cb').length;
+  var selAll = document.getElementById('selectAllCb');
+  if (selAll) {
+    selAll.indeterminate = (count > 0 && count < totalCbs);
+    if (count === 0) selAll.checked = false;
+    if (totalCbs > 0 && count === totalCbs) selAll.checked = true;
+  }
+}
+
+function toggleSelect(id, itemEl) {
+  var cb = itemEl.querySelector('.notif-cb');
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id); itemEl.classList.remove('selected');
+    if (cb) cb.checked = false;
+  } else {
+    selectedIds.add(id); itemEl.classList.add('selected');
+    if (cb) cb.checked = true;
+  }
+  updateSelectedUI();
+}
+
+function cbChanged(id, cb) {
+  var itemEl = document.getElementById('notif-' + id);
+  if (cb.checked) { selectedIds.add(id); itemEl.classList.add('selected'); }
+  else { selectedIds.delete(id); itemEl.classList.remove('selected'); }
+  updateSelectedUI();
+}
+
+var selAllEl = document.getElementById('selectAllCb');
+if (selAllEl) selAllEl.addEventListener('change', function() {
+  document.querySelectorAll('.notif-cb').forEach(function(cb) {
+    var id = parseInt(cb.dataset.id);
+    var itemEl = document.getElementById('notif-' + id);
+    if (this.checked) { selectedIds.add(id); cb.checked = true; itemEl.classList.add('selected'); }
+    else { selectedIds.delete(id); cb.checked = false; itemEl.classList.remove('selected'); }
+  }.bind(this));
+  updateSelectedUI();
+});
+
+function applyReadUI(id) {
+  var item = document.getElementById('notif-' + id); if (!item) return;
+  item.classList.remove('unread', 'selected');
+  item.dataset.read = 'true';
+  var dot = document.getElementById('dot-' + id); if (dot) dot.classList.add('invisible');
+  var icon = document.getElementById('icon-' + id); if (icon) { icon.classList.remove('unread'); icon.classList.add('read'); }
+  var cb = item.querySelector('.notif-cb'); if (cb) { cb.checked = false; cb.dataset.read = 'true'; }
+  var meta = item.querySelector('.notif-meta');
+  if (meta && !meta.querySelector('.notif-read-badge')) meta.insertAdjacentHTML('beforeend', ' &nbsp;·&nbsp;<span class="notif-read-badge"><i class="fas fa-check-double"></i> مقروء</span>');
+}
+
+function updateBadgeUI(count) {
+  var topBadge = document.getElementById('topbarNotifBadge');
+  var sideBadge = document.getElementById('sidebarNotifBadge');
+  var hdr = document.getElementById('headerSubText');
+  if (count > 0) {
+    var lbl = count > 9 ? '9+' : String(count);
+    if (topBadge) { topBadge.style.display = 'flex'; topBadge.textContent = lbl; }
+    if (sideBadge) { sideBadge.style.display = 'inline-flex'; sideBadge.textContent = lbl; }
+    if (hdr) hdr.innerHTML = '<span style="color:#17616c;font-weight:600;">' + count + ' إشعار غير مقروء</span>';
+  } else {
+    if (topBadge) topBadge.style.display = 'none';
+    if (sideBadge) sideBadge.style.display = 'none';
+    if (hdr) hdr.textContent = 'جميع الإشعارات مقروءة';
+  }
+}
+
+function markSmart() {
+  var ids = Array.from(selectedIds).filter(function(id) {
+    var item = document.getElementById('notif-' + id);
+    return item && item.dataset.read === 'false';
+  });
+  if (ids.length === 0) return;
+  Promise.all(ids.map(function(id) {
+    return fetch(MARK_READ_URL, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'csrfmiddlewaretoken=' + CSRF + '&notification_id=' + id
+    }).then(function(r) { return r.json(); });
+  })).then(function(results) {
+    ids.forEach(function(id) { applyReadUI(id); selectedIds.delete(id); });
+    var selAll = document.getElementById('selectAllCb'); if (selAll) selAll.checked = false;
+    updateSelectedUI();
+    var last = results[results.length - 1];
+    if (last && last.unread_count !== undefined) updateBadgeUI(last.unread_count);
+    showToast('تم تحديد الإشعارات المحددة كمقروءة', 'success');
+  }).catch(function() { showToast('حدث خطأ، يرجى المحاولة مجدداً', 'error'); });
+}
+
+function deleteSelected() {
+  if (selectedIds.size === 0) return;
+  if (!confirm('هل تريد حذف ' + selectedIds.size + ' إشعار؟')) return;
+  var ids = Array.from(selectedIds).join(',');
+  fetch(DELETE_URL, {
+    method: 'POST',
+    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'csrfmiddlewaretoken=' + CSRF + '&ids=' + ids
+  }).then(function(r) { return r.json(); })
+  .then(function(data) {
+    Array.from(selectedIds).forEach(function(id) {
+      var item = document.getElementById('notif-' + id); if (item) item.remove();
+    });
+    selectedIds.clear();
+    var selAll = document.getElementById('selectAllCb'); if (selAll) selAll.checked = false;
+    updateSelectedUI();
+    if (data.unread_count !== undefined) updateBadgeUI(data.unread_count);
+    if (data.total === 0) {
+      var toolbar = document.getElementById('notifToolbar');
+      var list = document.getElementById('notifList');
+      if (toolbar) toolbar.style.display = 'none';
+      if (list) list.innerHTML = '<div class="notif-empty"><div class="empty-icon"><i class="fas fa-bell-slash"></i></div><div style="font-size:1.1rem;font-weight:700;color:#5a7a84;">لا توجد إشعارات</div></div>';
+    }
+    showToast('تم حذف الإشعارات المحددة بنجاح', 'success');
+  }).catch(function() { showToast('حدث خطأ، يرجى المحاولة مجدداً', 'error'); });
+}
+</script>
+{% endblock %}

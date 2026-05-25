@@ -1,0 +1,748 @@
+{% extends 'base.html' %}
+{% block title %}تسجيل الدخول — نظام الجداول الدراسية{% endblock %}
+
+{% block auth_content %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول — نظام الجداول الدراسية</title>
+  <link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body::before,body::after{display:none!important}
+    ::-webkit-scrollbar{width:4px}
+    ::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:4px}
+    #page-progress{display:none!important}
+
+    :root {
+      --deep:   #040e16;
+      --dark:   #082034;
+      --mid:    #0e4762;
+      --teal:   #146b7a;
+      --light:  #1c96ab;
+      --accent: #00d4be;
+      --gold:   #f6aa24;
+    }
+
+    body {
+      font-family: 'Tajawal',sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #f0f4f8;
+      overflow-x: hidden;
+    }
+
+    .login-wrapper {
+      display: flex;
+      flex: 1;
+      min-height: 100vh;
+    }
+
+    /* ══ LEFT PANEL ══ */
+    .login-left {
+      flex: 1;
+      display: none;
+      background: linear-gradient(155deg, var(--deep) 0%, var(--dark) 35%, var(--mid) 70%, var(--teal) 100%);
+      position: relative;
+      overflow: hidden;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 3rem 2.5rem;
+    }
+    @media (min-width: 960px) { .login-left { display: flex; } }
+
+    /* Animated mesh orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .orb-1 {
+      width: 520px; height: 520px;
+      top: -160px; right: -160px;
+      background: radial-gradient(circle, rgba(0,212,190,0.15) 0%, transparent 70%);
+      animation: orb-float-1 10s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 380px; height: 380px;
+      bottom: -120px; left: -100px;
+      background: radial-gradient(circle, rgba(20,107,122,0.2) 0%, transparent 70%);
+      animation: orb-float-2 13s ease-in-out infinite;
+    }
+    .orb-3 {
+      width: 220px; height: 220px;
+      top: 48%; left: 20%;
+      background: radial-gradient(circle, rgba(246,170,36,0.08) 0%, transparent 70%);
+      animation: orb-float-3 8s ease-in-out infinite;
+    }
+    .orb-4 {
+      width: 140px; height: 140px;
+      top: 20%; right: 30%;
+      background: radial-gradient(circle, rgba(0,212,190,0.1) 0%, transparent 70%);
+      animation: orb-float-1 6s ease-in-out infinite reverse;
+    }
+    @keyframes orb-float-1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-24px,28px) scale(1.04)} }
+    @keyframes orb-float-2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(28px,-22px) scale(1.06)} }
+    @keyframes orb-float-3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(12px,14px) scale(1.1)} }
+
+    /* Grid pattern */
+    .login-left::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* Accent line at right edge */
+    .login-left::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(180deg,transparent,var(--accent),var(--light),transparent);
+      opacity: 0.4;
+    }
+
+    .info-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 440px;
+      width: 100%;
+    }
+
+    .info-logo {
+      width: 96px; height: 96px;
+      background: linear-gradient(135deg, var(--accent), #00a896);
+      border-radius: 28px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 2.2rem;
+      font-size: 2.6rem;
+      color: #fff;
+      box-shadow: 0 16px 52px rgba(0,212,190,0.5), 0 0 0 14px rgba(0,212,190,0.08);
+      animation: logo-glow 4s ease-in-out infinite;
+      position: relative;
+    }
+    .info-logo::after {
+      content: '';
+      position: absolute;
+      inset: -5px;
+      border-radius: 33px;
+      border: 1.5px solid rgba(0,212,190,0.2);
+      animation: ring-pulse 4s ease-in-out infinite;
+    }
+    @keyframes logo-glow {
+      0%,100%{ box-shadow: 0 16px 52px rgba(0,212,190,0.5), 0 0 0 14px rgba(0,212,190,0.07); }
+      50%    { box-shadow: 0 20px 68px rgba(0,212,190,0.7), 0 0 0 22px rgba(0,212,190,0.12); }
+    }
+    @keyframes ring-pulse {
+      0%,100%{ opacity: 0.2; transform: scale(1); }
+      50%    { opacity: 0.45; transform: scale(1.06); }
+    }
+
+    .info-title {
+      font-size: 2.25rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 0.85rem;
+      letter-spacing: -0.6px;
+    }
+    .info-title .accent { color: var(--accent); }
+
+    .info-sub {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.48);
+      line-height: 1.7;
+      margin-bottom: 2.8rem;
+    }
+
+    .info-features {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      text-align: right;
+    }
+    .info-feature {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 15px;
+      padding: 0.9rem 1.2rem;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+    .info-feature:hover {
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(0,212,190,0.2);
+      transform: translateX(-3px);
+    }
+    .info-feature-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #00a0a0);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(0,212,190,0.35);
+    }
+    .info-feature-title { color: #fff; font-weight: 700; font-size: 0.87rem; margin-bottom: 1px; }
+    .info-feature-text  { font-size: 0.78rem; color: rgba(255,255,255,0.6); font-weight: 400; }
+
+    /* Stats strip at bottom of left panel */
+    .left-stats {
+      position: relative; z-index: 2;
+      margin-top: 2.5rem;
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+    }
+    .left-stat {
+      text-align: center;
+      padding: 0.6rem 1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      min-width: 80px;
+    }
+    .left-stat-val { font-size: 1.35rem; font-weight: 900; color: var(--accent); line-height: 1; }
+    .left-stat-lbl { font-size: 0.66rem; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+    /* ══ RIGHT PANEL ══ */
+    .login-right {
+      width: 100%;
+      max-width: 490px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      background: #f0f4f8;
+      position: relative;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    @media (max-width: 959px) { .login-right { max-width: 100%; } }
+
+    .login-right::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: -100px;
+      width: 360px; height: 360px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,212,190,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .login-right::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; right: -80px;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(20,107,122,0.05) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 430px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Mobile header */
+    .mobile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    @media (min-width: 960px) { .mobile-header { display: none; } }
+    .mobile-logo-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, var(--accent), #00a896);
+      border-radius: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.9rem;
+      color: #fff;
+      margin-bottom: 1rem;
+      box-shadow: 0 10px 30px rgba(0,212,190,0.38);
+    }
+    .mobile-logo-title { font-size: 1.15rem; font-weight: 900; color: var(--dark); }
+    .mobile-logo-sub { font-size: 0.75rem; color: #8a9ba5; margin-top: 3px; }
+
+    /* Login card */
+    .login-card {
+      background: #fff;
+      border-radius: 26px;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.1), 0 2px 10px rgba(0,0,0,0.04);
+      overflow: hidden;
+      border: 1px solid rgba(10,51,65,0.06);
+    }
+
+    .login-card-header {
+      background: linear-gradient(140deg, var(--deep), var(--dark), var(--mid));
+      padding: 2.2rem 2rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 80% at 90% 50%, rgba(0,212,190,0.12) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 60% at 10% 80%, rgba(28,150,171,0.1) 0%,transparent 60%);
+      pointer-events: none;
+    }
+    .login-card-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.75;
+    }
+    .lc-icon {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.1rem;
+      font-size: 1.6rem;
+      color: var(--accent);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+    }
+    .login-card-header h4 {
+      color: #fff;
+      font-size: 1.45rem;
+      font-weight: 900;
+      margin: 0 0 0.32rem;
+      letter-spacing: -0.4px;
+      position: relative; z-index: 1;
+    }
+    .login-card-header p {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin: 0;
+      position: relative; z-index: 1;
+    }
+
+    .login-card-body { padding: 2.2rem 2rem; }
+
+    /* Error/success alerts */
+    .login-alert {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-right: 4px solid #ef4444;
+      border-radius: 13px;
+      padding: 0.9rem 1.1rem;
+      color: #991b1b;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      animation: slideIn 0.3s ease;
+    }
+    .login-alert.success {
+      background: #f0fdf4; border-color: #bbf7d0; border-right-color: #22c55e; color: #14532d;
+    }
+    .login-alert.warning {
+      background: #fffbeb; border-color: #fde68a; border-right-color: #f59e0b; color: #78350f;
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* Field groups */
+    .field-group { margin-bottom: 1.4rem; }
+    .field-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #3a5a6a;
+      margin-bottom: 0.48rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute;
+      right: 1rem; top: 50%;
+      transform: translateY(-50%);
+      color: #9ab0ba;
+      font-size: 0.85rem;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+    .toggle-password {
+      position: absolute;
+      left: 0.9rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer;
+      color: #9ab0ba;
+      font-size: 0.85rem;
+      padding: 0.25rem;
+      line-height: 1;
+      transition: color 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 2;
+    }
+    .toggle-password:hover { color: var(--teal); }
+
+    .login-input {
+      width: 100%;
+      background: #f6f9fc;
+      border: 2px solid #dce5ee;
+      border-radius: 13px;
+      padding: 0.82rem 2.8rem 0.82rem 2.8rem;
+      font-family: 'Tajawal',sans-serif;
+      font-size: 0.92rem;
+      color: var(--dark);
+      transition: all 0.22s;
+      outline: none;
+      direction: rtl;
+    }
+    .login-input:focus {
+      border-color: var(--teal);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(20,107,122,0.1);
+    }
+    .login-input:focus ~ .input-icon { color: var(--teal); }
+    .login-input.is-invalid { border-color: #ef4444; background: #fff5f5; }
+    .login-input.is-invalid:focus { box-shadow: 0 0 0 4px rgba(239,68,68,0.1); }
+
+    .field-error {
+      display: flex; align-items: center; gap: 0.35rem;
+      color: #dc2626; font-size: 0.76rem; margin-top: 0.42rem; font-weight: 600;
+    }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(135deg, var(--teal), var(--light));
+      color: #fff;
+      border: none;
+      border-radius: 13px;
+      padding: 0.92rem;
+      font-family: 'Tajawal',sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.65rem;
+      box-shadow: 0 8px 24px rgba(20,107,122,0.38);
+      letter-spacing: 0.2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-login::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--light), #22b8ce);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(20,107,122,0.52); }
+    .btn-login:hover::before { opacity: 1; }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login span { position: relative; z-index: 1; }
+    .btn-login i { position: relative; z-index: 1; }
+
+    /* Divider */
+    .or-divider {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin: 1.5rem 0 1.3rem;
+      color: #9ab0ba; font-size: 0.75rem; font-weight: 600;
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; flex: 1; height: 1px; background: #e5edf2;
+    }
+
+    /* Public schedule link */
+    .pub-link {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.55rem;
+      color: var(--teal);
+      font-size: 0.86rem; font-weight: 700;
+      text-decoration: none;
+      padding: 0.75rem;
+      border: 2px solid rgba(20,107,122,0.14);
+      border-radius: 13px;
+      transition: all 0.22s;
+      background: rgba(20,107,122,0.03);
+    }
+    .pub-link:hover {
+      background: rgba(20,107,122,0.08);
+      border-color: rgba(20,107,122,0.3);
+      color: var(--teal);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(20,107,122,0.12);
+    }
+
+    /* Version badge */
+    .version-badge {
+      text-align: center;
+      margin-top: 1.6rem;
+      color: #b0c4cc;
+      font-size: 0.7rem;
+    }
+    .version-badge span {
+      background: rgba(20,107,122,0.06);
+      border: 1px solid rgba(20,107,122,0.12);
+      border-radius: 99px;
+      padding: 0.2em 0.75em;
+      font-weight: 600;
+    }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 0.6rem 1rem;
+      color: #a0b4bc;
+      font-size: 0.72rem;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+
+<!-- ══ LEFT PANEL ══ -->
+<div class="login-left">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+
+  <div class="info-content">
+    <div class="info-logo"><i class="fas fa-graduation-cap"></i></div>
+    <h1 class="info-title">نظام إدارة<br><span class="accent">الجداول الدراسية</span></h1>
+    <p class="info-sub">منصة متكاملة متطورة لإدارة الجداول الدراسية<br>في جامعة السودان للعلوم والتكنولوجيا</p>
+
+    <div class="info-features">
+      <div class="info-feature">
+        <div class="info-feature-icon"><i class="fas fa-calendar-week"></i></div>
+        <div>
+          <div class="info-feature-title">جدولة ذكية متطورة</div>
+          <div class="info-feature-text">إدارة شاملة للمحاضرات والمعامل مع كشف التعارضات آلياً</div>
+        </div>
+      </div>
+      <div class="info-feature">
+        <div class="info-feature-icon"><i class="fas fa-users-cog"></i></div>
+        <div>
+          <div class="info-feature-title">أدوار متعددة المستويات</div>
+          <div class="info-feature-text">مدير نظام، مدير كلية، رئيس قسم، أستاذ، طالب</div>
+        </div>
+      </div>
+      <div class="info-feature">
+        <div class="info-feature-icon"><i class="fas fa-chart-line"></i></div>
+        <div>
+          <div class="info-feature-title">تحليلات بيانات تفاعلية</div>
+          <div class="info-feature-text">لوحات بيانات احترافية مع مؤشرات أداء شاملة</div>
+        </div>
+      </div>
+      <div class="info-feature">
+        <div class="info-feature-icon"><i class="fas fa-file-export"></i></div>
+        <div>
+          <div class="info-feature-title">تصدير متعدد الصيغ</div>
+          <div class="info-feature-text">تصدير الجداول بصيغ PDF وExcel وCSV بجودة عالية</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-stats">
+      <div class="left-stat">
+        <div class="left-stat-val">4</div>
+        <div class="left-stat-lbl">كليات</div>
+      </div>
+      <div class="left-stat">
+        <div class="left-stat-val">9</div>
+        <div class="left-stat-lbl">أقسام</div>
+      </div>
+      <div class="left-stat">
+        <div class="left-stat-val">14</div>
+        <div class="left-stat-lbl">أستاذ</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIGHT PANEL ══ -->
+<div class="login-right">
+  <div class="login-box">
+
+    <div class="mobile-header">
+      <div class="mobile-logo-icon"><i class="fas fa-graduation-cap"></i></div>
+      <div class="mobile-logo-title">نظام الجداول الدراسية</div>
+      <div class="mobile-logo-sub">جامعة السودان للعلوم والتكنولوجيا</div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-card-header">
+        <div class="lc-icon"><i class="fas fa-user-shield"></i></div>
+        <h4>تسجيل الدخول</h4>
+        <p>أدخل بيانات حسابك للمتابعة</p>
+      </div>
+
+      <div class="login-card-body">
+        {% if form.non_field_errors %}
+          <div class="login-alert">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</span>
+          </div>
+        {% endif %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="login-alert {% if message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% endif %}">
+              <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-exclamation-circle{% endif %}"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" novalidate id="loginForm">
+          {% csrf_token %}
+
+          <div class="field-group">
+            <label class="field-label" for="{{ form.username.id_for_label }}">
+              <i class="fas fa-user-circle" style="color:#9ab0ba;"></i>
+              اسم المستخدم أو البريد الإلكتروني
+            </label>
+            <div class="input-wrap">
+              <input
+                type="text"
+                name="{{ form.username.html_name }}"
+                id="{{ form.username.id_for_label }}"
+                value="{{ form.username.value|default:'' }}"
+                placeholder="أدخل اسم المستخدم"
+                class="login-input {% if form.username.errors %}is-invalid{% endif %}"
+                autocomplete="username"
+                autofocus
+              >
+              <i class="fas fa-at input-icon"></i>
+            </div>
+            {% for error in form.username.errors %}
+              <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="{{ form.password.id_for_label }}">
+              <i class="fas fa-lock" style="color:#9ab0ba;"></i>
+              كلمة المرور
+            </label>
+            <div class="input-wrap">
+              <input
+                type="password"
+                name="{{ form.password.html_name }}"
+                id="{{ form.password.id_for_label }}"
+                placeholder="أدخل كلمة المرور"
+                class="login-input {% if form.password.errors %}is-invalid{% endif %}"
+                autocomplete="current-password"
+                id="passwordInput"
+              >
+              <i class="fas fa-lock input-icon" id="passIcon"></i>
+              <button type="button" class="toggle-password" id="togglePassword">
+                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+              </button>
+            </div>
+            {% for error in form.password.errors %}
+              <div class="field-error"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="btn-login" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>دخول إلى النظام</span>
+          </button>
+        </form>
+
+        <div class="or-divider">أو</div>
+
+        <a href="{% url 'public_schedule' %}" class="pub-link">
+          <i class="fas fa-globe"></i>
+          عرض الجدول العام بدون تسجيل دخول
+        </a>
+
+        <div class="version-badge">
+          نظام إدارة الجداول الدراسية &nbsp;·&nbsp; <span>الإصدار 5.0</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<footer class="page-footer">© 2025 جامعة السودان للعلوم والتكنولوجيا &nbsp;·&nbsp; جميع الحقوق محفوظة</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const toggleBtn = document.getElementById('togglePassword');
+  const passwordInput = document.querySelector('input[name="{{ form.password.html_name }}"]');
+  const toggleIcon = document.getElementById('togglePasswordIcon');
+  const passIcon = document.getElementById('passIcon');
+
+  if (toggleBtn && passwordInput) {
+    toggleBtn.addEventListener('click', function() {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      toggleIcon.className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+    });
+  }
+
+  // Submit loading state
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginForm && loginBtn) {
+    loginForm.addEventListener('submit', function() {
+      loginBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>جاري الدخول...</span>';
+      loginBtn.disabled = true;
+      setTimeout(() => {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i><span>دخول إلى النظام</span>';
+      }, 6000);
+    });
+  }
+
+  // Input focus effects
+  document.querySelectorAll('.login-input').forEach(function(inp) {
+    inp.addEventListener('focus', function() {
+      this.closest('.input-wrap').querySelector('.input-icon').style.color = '#146b7a';
+    });
+    inp.addEventListener('blur', function() {
+      this.closest('.input-wrap').querySelector('.input-icon').style.color = '#9ab0ba';
+    });
+  });
+</script>
+</body>
+</html>
+{% endblock %}

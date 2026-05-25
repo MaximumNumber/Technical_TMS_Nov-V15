@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}رؤساء الأقسام - {{ college.name }}{% endblock %}
+{% block page_title %}رؤساء الأقسام{% endblock %}
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-users-cog"></i></div>
+    <div><h4>رؤساء الأقسام</h4><div class="page-header-sub">{{ college.name }}</div></div>
+  </div>
+  <a href="{% url 'cm_dept_head_add' %}" class="btn btn-tms btn-sm"><i class="fas fa-plus me-1"></i>إضافة رئيس قسم</a>
+</div>
+
+<div class="card fade-in-up fade-in-up-1">
+  <div class="card-header card-header-dark d-flex align-items-center gap-2">
+    <div style="width:26px;height:26px;background:rgba(0,212,190,0.18);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#00d4be;font-size:0.7rem;position:relative;z-index:1;"><i class="fas fa-list"></i></div>
+    <strong style="color:#fff;position:relative;z-index:1;">قائمة رؤساء الأقسام</strong>
+    {% if dept_heads %}<span class="badge-tms badge-primary" style="margin-right:auto;position:relative;z-index:1;">{{ dept_heads|length }}</span>{% endif %}
+  </div>
+  <div class="table-wrap">
+    <table class="tms-table">
+      <thead>
+        <tr>
+          <th>#</th><th>الاسم</th><th>اسم المستخدم</th><th>القسم</th><th>البريد الإلكتروني</th><th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dh in dept_heads %}
+        <tr>
+          <td style="color:#a0b8c1;font-size:0.8rem;">{{ forloop.counter }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#17616c,#1a7a8a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;">{{ dh.full_name|default:""|first|default:"؟" }}</div>
+              <span class="fw-semibold" style="color:#0d5263;">{{ dh.full_name }}</span>
+            </div>
+          </td>
+          <td><code style="background:#f0f4f8;color:#17616c;border-radius:6px;padding:2px 6px;font-size:0.78rem;">{{ dh.username }}</code></td>
+          <td>
+            {% if dh.department %}
+              <span class="chip">{{ dh.department.name }}</span>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+          <td style="font-size:0.82rem;color:#5a7a84;">{{ dh.email|default:"—" }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'view_user_profile' dh.username %}" class="btn btn-icon btn-outline-secondary" title="عرض الملف الشخصي"><i class="fas fa-user"></i></a>
+              <a href="{% url 'cm_dept_head_edit' dh.pk %}" class="btn btn-icon btn-outline-primary" title="تعديل"><i class="fas fa-edit"></i></a>
+              <form method="post" action="{% url 'cm_dept_head_delete' dh.pk %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا رئيس القسم؟');" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-icon btn-outline-danger" title="حذف"><i class="fas fa-trash-alt"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="fas fa-users-cog"></i>
+              <p>لا يوجد رؤساء أقسام</p>
+              <a href="{% url 'cm_dept_head_add' %}" class="btn btn-tms btn-sm mt-2"><i class="fas fa-plus me-1"></i>إضافة رئيس قسم</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

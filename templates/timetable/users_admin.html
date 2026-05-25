@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}المستخدمون{% endblock %}
+{% block page_title %}إدارة المستخدمين{% endblock %}
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-users"></i></div>
+    <div><h4>المستخدمون</h4><div class="page-header-sub">إدارة حسابات المستخدمين</div></div>
+  </div>
+  <a href="{% url 'college_manager_add' %}" class="btn btn-tms btn-sm"><i class="fas fa-user-plus me-1"></i> إضافة مدير كلية</a>
+</div>
+<div class="card mb-3 fade-in-up">
+  <div class="card-body py-2">
+    <!-- Search bar -->
+    <form method="get" action="{% url 'user_list_admin' %}" id="userSearchForm">
+      {% if selected_type %}<input type="hidden" name="type" value="{{ selected_type }}">{% endif %}
+      <div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:0.6rem;">
+        <div style="position:relative;flex:1;">
+          <span style="position:absolute;right:0.85rem;top:50%;transform:translateY(-50%);color:#9ab0ba;pointer-events:none;">
+            <i class="fas fa-search" style="font-size:0.85rem;"></i>
+          </span>
+          <input type="text" name="q" value="{{ search_q }}"
+            placeholder="ابحث بالاسم أو اسم المستخدم أو البريد..."
+            style="width:100%;padding:0.5rem 2.3rem 0.5rem 0.85rem;border:1.5px solid #dce8ed;border-radius:10px;font-size:0.87rem;color:#1a3a46;outline:none;transition:border-color .2s;"
+            onfocus="this.style.borderColor='#17616c'" onblur="this.style.borderColor='#dce8ed'">
+        </div>
+        <button type="submit" class="btn btn-tms btn-sm px-3" style="flex-shrink:0;">بحث</button>
+        {% if search_q %}
+        <a href="{% url 'user_list_admin' %}{% if selected_type %}?type={{ selected_type }}{% endif %}"
+           class="btn btn-outline-secondary btn-sm px-3" style="flex-shrink:0;" title="مسح البحث">
+          <i class="fas fa-times"></i>
+        </a>
+        {% endif %}
+      </div>
+    </form>
+    <!-- Type filters -->
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <span style="font-size:0.8rem;color:#7a9ba5;font-weight:600;">تصفية:</span>
+      <a href="{% url 'user_list_admin' %}{% if search_q %}?q={{ search_q }}{% endif %}" class="btn btn-xs {% if not selected_type %}btn-tms{% else %}btn-outline-secondary{% endif %}">الكل</a>
+      <a href="{% url 'user_list_admin' %}?type=system_manager{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-xs {% if selected_type == 'system_manager' %}btn-tms{% else %}btn-outline-secondary{% endif %}">مديرو النظام</a>
+      <a href="{% url 'user_list_admin' %}?type=college_manager{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-xs {% if selected_type == 'college_manager' %}btn-tms{% else %}btn-outline-secondary{% endif %}">مديرو الكليات</a>
+      <a href="{% url 'user_list_admin' %}?type=professor{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-xs {% if selected_type == 'professor' %}btn-tms{% else %}btn-outline-secondary{% endif %}">الأساتذة</a>
+      <a href="{% url 'user_list_admin' %}?type=student{% if search_q %}&q={{ search_q }}{% endif %}" class="btn btn-xs {% if selected_type == 'student' %}btn-tms{% else %}btn-outline-secondary{% endif %}">الطلاب</a>
+      {% if search_q %}
+      <span style="font-size:0.8rem;color:#17616c;font-weight:600;margin-right:auto;">
+        <i class="fas fa-filter me-1"></i>نتائج البحث عن: "{{ search_q }}" ({{ users|length }} نتيجة)
+      </span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="card fade-in-up fade-in-up-1">
+  <div class="table-wrap">
+    <table class="tms-table">
+      <thead><tr><th>#</th><th>الاسم الكامل</th><th>اسم المستخدم</th><th>البريد</th><th>النوع</th><th>الكلية/القسم</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td style="color:#a0b8c1;font-size:0.8rem;">{{ forloop.counter }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#17616c,#1a7a8a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.85rem;flex-shrink:0;">{{ u.full_name|default:""|first|default:"؟" }}</div>
+              <span class="fw-semibold" style="color:#0d5263;">{{ u.full_name }}</span>
+            </div>
+          </td>
+          <td><code style="background:#f0f4f8;color:#17616c;border-radius:6px;padding:2px 6px;font-size:0.78rem;">{{ u.username }}</code></td>
+          <td style="font-size:0.82rem;color:#5a7a84;">{{ u.email|default:"—" }}</td>
+          <td>
+            {% if u.user_type == 'system_manager' %}<span class="badge-tms badge-danger-soft">مدير النظام</span>
+            {% elif u.user_type == 'college_manager' %}<span class="badge-tms badge-primary">مدير كلية</span>
+            {% elif u.user_type == 'department_head' %}<span class="badge-tms badge-purple-soft">رئيس قسم</span>
+            {% elif u.user_type == 'professor' %}<span class="badge-tms badge-success-soft">أستاذ</span>
+            {% elif u.user_type == 'student' %}<span class="badge-tms badge-info-soft">طالب</span>
+            {% else %}<span class="badge-tms">{{ u.get_user_type_display }}</span>{% endif %}
+          </td>
+          <td style="font-size:0.82rem;">
+            {% if u.college %}{{ u.college.name }}{% elif u.department %}{{ u.department.name }}{% else %}—{% endif %}
+          </td>
+          <td>
+            {% if u.is_active %}<span class="badge-tms badge-success-soft"><i class="fas fa-check-circle me-1"></i>نشط</span>
+            {% else %}<span class="badge-tms badge-danger-soft">غير نشط</span>{% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{% url 'user_profile_admin' u.pk %}" class="btn btn-icon btn-outline-secondary" title="عرض الملف الشخصي"><i class="fas fa-user"></i></a>
+              {% if u.user_type != 'system_manager' %}
+              <a href="{% url 'user_delete_admin' u.pk %}" class="btn btn-icon btn-outline-danger" title="حذف"><i class="fas fa-trash"></i></a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8"><div class="empty-state"><i class="fas fa-users"></i><p>لا يوجد مستخدمون</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

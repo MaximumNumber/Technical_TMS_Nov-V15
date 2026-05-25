@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}تعديل الملف الشخصي{% endblock %}
+{% block page_title %}تعديل الملف الشخصي{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profile-card {
+    background: var(--c-surface);
+    border-radius: 22px;
+    box-shadow: var(--shadow-card-hover);
+    overflow: hidden;
+    border: 1px solid var(--c-border);
+  }
+  .profile-header {
+    background: linear-gradient(155deg, #020d14 0%, #062030 30%, #0a3347 60%, #146b7a 100%);
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+  .profile-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,190,0.55), transparent);
+  }
+  .profile-header .ph-avatar {
+    width: 58px; height: 58px;
+    background: linear-gradient(135deg, rgba(0,212,190,0.22), rgba(0,212,190,0.08));
+    border: 2px solid rgba(0,212,190,0.3);
+    border-radius: 17px;
+    display: flex; align-items: center; justify-content: center;
+    color: #00d4be; font-size: 1.5rem; font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0,212,190,0.2);
+    position: relative; z-index: 1;
+  }
+  .profile-header-text { position: relative; z-index: 1; }
+  .profile-header h5 { color: #fff; font-weight: 900; margin: 0 0 0.25rem; font-size: 1.15rem; }
+  .profile-header small { color: rgba(255,255,255,0.45); font-size: 0.78rem; font-weight: 600; }
+  .profile-body { padding: 2rem; }
+  .profile-footer {
+    padding: 1.25rem 2rem;
+    background: var(--c-surface-2);
+    border-top: 1px solid var(--c-border);
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .field-note { font-size: 0.75rem; color: #9ab0ba; margin-top: 0.3rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-user-edit"></i></div>
+    <div>
+      <h4>تعديل الملف الشخصي</h4>
+      <div class="page-header-sub">إعدادات الحساب الشخصي</div>
+    </div>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-xl-6 col-lg-8">
+
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="fade-in-up" style="background:#f0fdf4;border:1px solid #bbf7d0;border-right:4px solid #16a34a;border-radius:14px;padding:0.85rem 1.1rem;color:#15803d;font-weight:600;font-size:0.88rem;display:flex;align-items:center;gap:0.6rem;margin-bottom:1.25rem;">
+          <i class="fas fa-check-circle"></i> {{ msg }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="profile-card fade-in-up fade-in-up-1">
+      <div class="profile-header">
+        <div class="ph-avatar">{{ request.user.full_name|default:""|first|upper|default:"U" }}</div>
+        <div class="profile-header-text">
+          <h5>{{ request.user.full_name }}</h5>
+          <small>{{ request.user.get_user_type_display }} &nbsp;·&nbsp; {{ request.user.username }}</small>
+        </div>
+      </div>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="profile-body">
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 mb-3">
+            {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+          </div>
+          {% endif %}
+          {% for field in form %}
+          <div class="mb-4">
+            <label class="form-label" for="{{ field.id_for_label }}">
+              {{ field.label }}
+              {% if field.field.required %}<span style="color:#ef4444;margin-right:2px;">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+            <div class="field-note"><i class="fas fa-info-circle me-1"></i>{{ field.help_text }}</div>
+            {% endif %}
+            {% for error in field.errors %}
+            <div style="color:#dc2626;font-size:0.76rem;margin-top:0.3rem;display:flex;align-items:center;gap:0.3rem;"><i class="fas fa-exclamation-circle"></i>{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="profile-footer">
+          <button type="submit" class="btn btn-tms px-4">
+            <i class="fas fa-save me-2"></i>حفظ التغييرات
+          </button>
+          <a href="{% url 'change_password' %}" class="btn btn-sm btn-outline-secondary px-3">
+            <i class="fas fa-lock me-1"></i>تغيير كلمة المرور
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Card shell ── */
+  .uni-form-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.07);
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+    border: 1px solid #e8f0f4;
+  }
+
+  /* ── Section header ── */
+  .uni-form-header {
+    background: linear-gradient(135deg, #071e26 0%, #0a3341 60%, #17616c 100%);
+    padding: 1.1rem 1.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .uni-form-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00c9b1, transparent);
+    opacity: 0.7;
+  }
+  .uni-form-header .hdr-icon {
+    width: 40px; height: 40px; flex-shrink: 0;
+    background: rgba(0,201,177,0.15);
+    border: 1px solid rgba(0,201,177,0.3);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #00c9b1;
+    font-size: 1rem;
+  }
+  .uni-form-header .hdr-text h5 {
+    color: #fff;
+    font-weight: 800;
+    margin: 0 0 2px;
+    font-size: 0.93rem;
+  }
+  .uni-form-header .hdr-text small {
+    color: rgba(255,255,255,0.72);
+    font-size: 0.74rem;
+    font-weight: 500;
+  }
+
+  /* ── Body ── */
+  .uni-form-body { padding: 1.6rem; }
+
+  /* ── Field ── */
+  .field-group { margin-bottom: 1.15rem; }
+  .field-group:last-child { margin-bottom: 0; }
+
+  label.form-label {
+    font-weight: 700;
+    color: #1a3a46;
+    font-size: 0.83rem;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  label.form-label i { color: #17616c; font-size: 0.8rem; }
+  label.form-label .req { color: #e53e3e; font-size: 0.72rem; }
+
+  .form-control {
+    border: 2px solid #d5e2e8;
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.88rem;
+    color: #0a2e38;
+    background: #f8fbfc;
+    width: 100%;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  .form-control:focus {
+    border-color: #17616c;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(23,97,108,0.12);
+    outline: none;
+  }
+  .form-control::placeholder { color: #8aacb5; font-weight: 500; }
+  textarea.form-control { resize: vertical; min-height: 100px; }
+
+  /* ── Validation ── */
+  .errorlist { list-style: none; padding: 0; margin: 0.3rem 0 0; }
+  .errorlist li {
+    color: #c53030;
+    font-size: 0.77rem;
+    font-weight: 700;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  .errorlist li::before { content: '\f06a'; font-family: 'Font Awesome 6 Free'; font-weight: 900; font-size: 0.7rem; }
+
+  /* ── Hint ── */
+  .field-hint {
+    font-size: 0.74rem;
+    color: #4a7a88;
+    font-weight: 600;
+    margin-top: 0.28rem;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  .field-hint::before { content: '\f05a'; font-family: 'Font Awesome 6 Free'; font-weight: 900; font-size: 0.65rem; color: #17616c; }
+
+  /* ── Icon input wrapper (universal) ── */
+  .input-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-icon {
+    position: absolute;
+    right: 0.9rem;
+    color: #17616c;
+    font-size: 0.82rem;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .input-icon-wrap .form-control {
+    padding-right: 2.4rem;
+  }
+
+  /* ── Textarea wrapper ── */
+  .textarea-wrap {
+    position: relative;
+  }
+  .textarea-wrap .textarea-icon {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.9rem;
+    color: #17616c;
+    font-size: 0.82rem;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .textarea-wrap .form-control {
+    padding-right: 2.4rem;
+  }
+
+  /* ── Footer / Actions ── */
+  .uni-form-footer {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    border: 1px solid #e8f0f4;
+    padding: 1.1rem 1.6rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  .btn-form-save {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: linear-gradient(135deg, #17616c, #1a7a8a);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0.65rem 1.75rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem; font-weight: 800;
+    cursor: pointer;
+    transition: all .22s;
+    box-shadow: 0 4px 16px rgba(23,97,108,0.3);
+  }
+  .btn-form-save:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(23,97,108,0.45); }
+  .btn-form-cancel {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: #fff;
+    color: #2a5a68;
+    border: 2px solid #c8dce4;
+    border-radius: 10px;
+    padding: 0.63rem 1.4rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.88rem; font-weight: 700;
+    text-decoration: none;
+    transition: all .2s;
+  }
+  .btn-form-cancel:hover { border-color: #17616c; color: #17616c; background: #f0faf8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-university"></i></div>
+    <div>
+      <h4>{{ title }}</h4>
+      <div class="page-header-sub">إدارة بيانات الجامعة</div>
+    </div>
+  </div>
+  <a href="{% url 'university_list' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-arrow-right me-1"></i> العودة للقائمة
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-xl-8 col-lg-10">
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger mb-3">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- ══ Section 1: Basic Info ══ -->
+      <div class="uni-form-card fade-in-up fade-in-up-1">
+        <div class="uni-form-header">
+          <div class="hdr-icon"><i class="fas fa-info-circle"></i></div>
+          <div class="hdr-text">
+            <h5>المعلومات الأساسية</h5>
+            <small>الاسم الرسمي للجامعة ورمزها وسنة التأسيس</small>
+          </div>
+        </div>
+        <div class="uni-form-body">
+
+          <!-- اسم الجامعة — full width -->
+          <div class="row g-3">
+            <div class="col-12">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.name.id_for_label }}">
+                  <i class="fas fa-university"></i> اسم الجامعة <span class="req">*</span>
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-building-columns"></i></span>
+                  {{ form.name }}
+                </div>
+                {% if form.name.errors %}<ul class="errorlist">{% for e in form.name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">الاسم الرسمي الكامل للجامعة كما هو مسجل رسمياً</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- الرمز + السنة -->
+          <div class="row g-3 mt-0">
+            <div class="col-md-6">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.code.id_for_label }}">
+                  <i class="fas fa-hashtag"></i> الرمز / الاختصار <span class="req">*</span>
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-tag"></i></span>
+                  {{ form.code }}
+                </div>
+                {% if form.code.errors %}<ul class="errorlist">{% for e in form.code.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">اختصار مميز للجامعة مثل: SUST</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.established_year.id_for_label }}">
+                  <i class="fas fa-calendar-alt"></i> سنة التأسيس
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-history"></i></span>
+                  {{ form.established_year }}
+                </div>
+                {% if form.established_year.errors %}<ul class="errorlist">{% for e in form.established_year.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">السنة الميلادية المكونة من 4 أرقام</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- مدير الجامعة -->
+          <div class="row g-3 mt-0">
+            <div class="col-12">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.rector_name.id_for_label }}">
+                  <i class="fas fa-user-tie"></i> اسم مدير الجامعة / الرئيس
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-id-card"></i></span>
+                  {{ form.rector_name }}
+                </div>
+                {% if form.rector_name.errors %}<ul class="errorlist">{% for e in form.rector_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">الاسم الكامل لمدير أو رئيس الجامعة الحالي</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- نبذة -->
+          <div class="row g-3 mt-0">
+            <div class="col-12">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.description.id_for_label }}">
+                  <i class="fas fa-align-right"></i> نبذة عن الجامعة
+                </label>
+                <div class="textarea-wrap">
+                  <span class="textarea-icon"><i class="fas fa-pen-to-square"></i></span>
+                  {{ form.description }}
+                </div>
+                {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">وصف مختصر يظهر في الصفحة العامة للجداول</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══ Section 2: Contact Info ══ -->
+      <div class="uni-form-card fade-in-up fade-in-up-2">
+        <div class="uni-form-header">
+          <div class="hdr-icon"><i class="fas fa-address-card"></i></div>
+          <div class="hdr-text">
+            <h5>بيانات التواصل والموقع</h5>
+            <small>الموقع الجغرافي ومعلومات الاتصال بالجامعة</small>
+          </div>
+        </div>
+        <div class="uni-form-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.location.id_for_label }}">
+                  <i class="fas fa-map-marker-alt"></i> الموقع / المدينة
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-location-dot"></i></span>
+                  {{ form.location }}
+                </div>
+                {% if form.location.errors %}<ul class="errorlist">{% for e in form.location.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">المدينة أو المنطقة الجغرافية للجامعة</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.phone.id_for_label }}">
+                  <i class="fas fa-phone"></i> رقم الهاتف
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-phone-flip"></i></span>
+                  {{ form.phone }}
+                </div>
+                {% if form.phone.errors %}<ul class="errorlist">{% for e in form.phone.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">رقم الاتصال الرسمي مع رمز الدولة</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.email.id_for_label }}">
+                  <i class="fas fa-envelope"></i> البريد الإلكتروني
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-at"></i></span>
+                  {{ form.email }}
+                </div>
+                {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">البريد الإلكتروني الرسمي للجامعة</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <label class="form-label" for="{{ form.website.id_for_label }}">
+                  <i class="fas fa-globe"></i> الموقع الإلكتروني
+                </label>
+                <div class="input-icon-wrap">
+                  <span class="input-icon"><i class="fas fa-link"></i></span>
+                  {{ form.website }}
+                </div>
+                {% if form.website.errors %}<ul class="errorlist">{% for e in form.website.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                <div class="field-hint">الرابط الكامل للموقع الرسمي بما فيه https://</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ Actions ══ -->
+      <div class="uni-form-footer fade-in-up fade-in-up-3">
+        <button type="submit" class="btn-form-save">
+          <i class="fas fa-save"></i>
+          {% if edit %}تحديث البيانات{% else %}حفظ الجامعة{% endif %}
+        </button>
+        <a href="{% url 'university_list' %}" class="btn-form-cancel">
+          <i class="fas fa-times"></i> إلغاء
+        </a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

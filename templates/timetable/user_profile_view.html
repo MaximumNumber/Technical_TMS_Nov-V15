@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}ملف {{ profile_user.full_name }}{% endblock %}
+{% block page_title %}الملف الشخصي{% endblock %}
+
+{% block extra_css %}
+<style>
+  .prof-hero {
+    background: linear-gradient(155deg, #020d14 0%, #062030 30%, #0a3347 60%, #146b7a 100%);
+    border-radius: 22px;
+    padding: 2rem 2.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 16px 52px rgba(2,13,20,0.35);
+  }
+  .prof-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),
+                      linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px);
+    background-size: 40px 40px; pointer-events: none;
+  }
+  .prof-hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(0,212,190,0.55), transparent);
+    pointer-events: none;
+  }
+  .prof-avatar {
+    width: 72px; height: 72px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(0,212,190,0.22), rgba(0,212,190,0.08));
+    border: 2px solid rgba(0,212,190,0.3);
+    display: flex; align-items: center; justify-content: center;
+    color: #00d4be; font-size: 2rem; font-weight: 900; flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0,212,190,0.2);
+    position: relative; z-index: 1;
+  }
+  .prof-hero-info { position: relative; z-index: 1; flex: 1; }
+  .prof-hero-info h3 { color: #fff; font-weight: 900; margin: 0 0 0.3rem; font-size: 1.4rem; }
+  .username-badge {
+    background: rgba(0,212,190,0.15); border: 1px solid rgba(0,212,190,0.25);
+    color: #7af0e5; border-radius: 8px; padding: 2px 10px;
+    font-size: 0.78rem; font-family: monospace; display: inline-block; margin-bottom: 0.5rem;
+  }
+  .prof-hero-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+  .prof-hero-meta span { color: rgba(255,255,255,0.55); font-size: 0.82rem; display: flex; align-items: center; gap: 0.35rem; }
+  .prof-hero-meta span i { color: #00d4be; }
+
+  .info-card {
+    background: var(--c-surface); border-radius: 18px;
+    box-shadow: var(--shadow-card); border: 1px solid var(--c-border);
+    margin-bottom: 1.5rem; overflow: hidden; transition: all var(--transition);
+  }
+  .info-card:hover { box-shadow: var(--shadow-card-hover); }
+  .info-card-header {
+    background: linear-gradient(155deg, #020d14 0%, #062030 30%, #0a3347 60%, #146b7a 100%);
+    padding: 0.9rem 1.4rem; border-bottom: 2px solid rgba(0,212,190,0.2);
+    display: flex; align-items: center; gap: 0.6rem;
+    position: relative; overflow: hidden;
+  }
+  .info-card-header::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),
+                      linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+    background-size: 30px 30px; pointer-events: none;
+  }
+  .info-card-header i { color: #00d4be; font-size: 0.9rem; position: relative; z-index: 1; }
+  .info-card-header h6 { margin: 0; font-weight: 800; color: #fff; font-size: 0.88rem; position: relative; z-index: 1; }
+  .info-card-body { padding: 1.25rem 1.4rem; }
+
+  .info-row {
+    display: flex; align-items: flex-start; gap: 0.75rem;
+    padding: 0.65rem 0; border-bottom: 1px solid var(--c-border);
+  }
+  .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .info-label { width: 130px; font-size: 0.78rem; color: #8aacb5; font-weight: 600; flex-shrink: 0; padding-top: 2px; }
+  .info-value { color: var(--c-primary-mid); font-size: 0.87rem; font-weight: 600; flex: 1; }
+
+  .stat-box {
+    background: var(--c-surface-2); border: 1.5px solid var(--c-border);
+    border-radius: 16px; padding: 1rem 1.2rem; text-align: center;
+    flex: 1; min-width: 100px; transition: all var(--transition);
+  }
+  .stat-box:hover { border-color: rgba(20,107,122,0.25); box-shadow: 0 4px 16px rgba(20,107,122,0.1); }
+  .stat-box .stat-num { font-size: 1.75rem; font-weight: 900; color: var(--c-primary-lt); line-height: 1; }
+  .stat-box .stat-lbl { font-size: 0.72rem; color: #5a8a8a; margin-top: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  .mini-table th { background: var(--c-surface-2); color: #5a7a84; font-weight: 700; padding: 0.55rem 0.85rem; border-bottom: 2px solid var(--c-border); font-size: 0.77rem; }
+  .mini-table td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--c-border); color: var(--c-primary-mid); }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-table tr:hover td { background: var(--c-surface-2); }
+
+  .badge-type { display:inline-flex; align-items:center; gap:0.35rem; padding:0.32rem 0.85rem; border-radius:20px; font-size:0.79rem; font-weight:700; border:1.5px solid; }
+  .badge-type.badge-cm      { background:rgba(59,130,246,0.22);  border-color:rgba(59,130,246,0.5);  color:#93c5fd; }
+  .badge-type.badge-prof    { background:rgba(34,197,94,0.22);   border-color:rgba(34,197,94,0.5);   color:#86efac; }
+  .badge-type.badge-student { background:rgba(14,165,233,0.22);  border-color:rgba(14,165,233,0.5);  color:#7dd3fc; }
+  .badge-type.badge-dhead   { background:rgba(168,85,247,0.22);  border-color:rgba(168,85,247,0.5);  color:#d8b4fe; }
+  .status-active   { color:#4ade80 !important; }
+  .status-inactive { color:#f87171 !important; }
+  .empty-mini { text-align:center; padding:1.5rem; color:#a0b8c1; font-size:0.82rem; }
+  .empty-mini i { font-size:1.5rem; display:block; margin-bottom:0.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-id-card"></i></div>
+    <div>
+      <h4>الملف الشخصي</h4>
+      <div class="page-header-sub">{{ profile_user.get_user_type_display }}</div>
+    </div>
+  </div>
+  <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-arrow-right me-1"></i> رجوع
+  </a>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="prof-hero fade-in-up">
+  <div class="prof-avatar">{{ profile_user.full_name|first|upper }}</div>
+  <div class="prof-hero-info">
+    <h3>{{ profile_user.full_name }}</h3>
+    <div class="username-badge">@{{ profile_user.username }}</div>
+    <div class="prof-hero-meta">
+      {% if profile_user.user_type == 'college_manager' %}
+        <span class="badge-type badge-cm"><i class="fas fa-user-tie"></i> مدير كلية</span>
+      {% elif profile_user.user_type == 'professor' %}
+        <span class="badge-type badge-prof"><i class="fas fa-chalkboard-teacher"></i> أستاذ</span>
+      {% elif profile_user.user_type == 'student' %}
+        <span class="badge-type badge-student"><i class="fas fa-user-graduate"></i> طالب</span>
+      {% elif profile_user.user_type == 'department_head' %}
+        <span class="badge-type badge-dhead"><i class="fas fa-sitemap"></i> رئيس قسم</span>
+      {% endif %}
+      {% if profile_user.is_active %}
+        <span><i class="fas fa-circle status-active"></i> نشط</span>
+      {% else %}
+        <span><i class="fas fa-circle status-inactive"></i> غير نشط</span>
+      {% endif %}
+      {% if profile_user.email %}
+        <span><i class="fas fa-envelope"></i> {{ profile_user.email }}</span>
+      {% endif %}
+      {% if profile_user.college %}
+        <span><i class="fas fa-university"></i> {{ profile_user.college.name }}</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- ════ LEFT COLUMN ════ -->
+  <div class="col-lg-4">
+
+    <!-- Personal Info -->
+    <div class="info-card fade-in-up fade-in-up-1">
+      <div class="info-card-header">
+        <i class="fas fa-user-circle"></i>
+        <h6>البيانات الشخصية</h6>
+      </div>
+      <div class="info-card-body">
+        <div class="info-row">
+          <div class="info-label">الاسم الكامل</div>
+          <div class="info-value">{{ profile_user.full_name }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">اسم المستخدم</div>
+          <div class="info-value"><code style="background:#f0f4f8;color:#17616c;border-radius:5px;padding:1px 7px;">{{ profile_user.username }}</code></div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">البريد الإلكتروني</div>
+          <div class="info-value">{{ profile_user.email|default:"—" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">نوع الحساب</div>
+          <div class="info-value">{{ profile_user.get_user_type_display }}</div>
+        </div>
+        {% if profile_user.college %}
+        <div class="info-row">
+          <div class="info-label">الكلية</div>
+          <div class="info-value">{{ profile_user.college.name }}</div>
+        </div>
+        {% endif %}
+        {% if profile_user.department %}
+        <div class="info-row">
+          <div class="info-label">القسم</div>
+          <div class="info-value">{{ profile_user.department.name }}</div>
+        </div>
+        {% endif %}
+        <div class="info-row">
+          <div class="info-label">الحالة</div>
+          <div class="info-value">
+            {% if profile_user.is_active %}
+              <span style="color:#16a34a;font-weight:700;"><i class="fas fa-check-circle me-1"></i>نشط</span>
+            {% else %}
+              <span style="color:#dc2626;font-weight:700;"><i class="fas fa-times-circle me-1"></i>غير نشط</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">تاريخ الإنشاء</div>
+          <div class="info-value">{{ profile_user.created_at|date:"Y/m/d" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professor extra info -->
+    {% if professor %}
+    <div class="info-card fade-in-up fade-in-up-2">
+      <div class="info-card-header">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <h6>بيانات الأستاذ</h6>
+      </div>
+      <div class="info-card-body">
+        <div class="info-row">
+          <div class="info-label">الرتبة العلمية</div>
+          <div class="info-value">{{ professor.position|default:"—" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">الكلية</div>
+          <div class="info-value">{{ professor.college.name|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Student extra info -->
+    {% if student %}
+    <div class="info-card fade-in-up fade-in-up-2">
+      <div class="info-card-header">
+        <i class="fas fa-user-graduate"></i>
+        <h6>بيانات الطالب</h6>
+      </div>
+      <div class="info-card-body">
+        <div class="info-row">
+          <div class="info-label">القسم</div>
+          <div class="info-value">{{ student.department.name|default:"—" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">السنة الدراسية</div>
+          <div class="info-value">{{ student.period.year.year_name|default:"—" }}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">الفصل</div>
+          <div class="info-value">فصل {{ student.period.semester_type|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats -->
+    {% if lectures_count is not None or labs_count is not None %}
+    <div class="info-card fade-in-up fade-in-up-3">
+      <div class="info-card-header">
+        <i class="fas fa-chart-pie"></i>
+        <h6>إحصائيات</h6>
+      </div>
+      <div class="info-card-body">
+        <div class="d-flex gap-2 flex-wrap">
+          {% if lectures_count is not None %}
+          <div class="stat-box">
+            <div class="stat-num">{{ lectures_count }}</div>
+            <div class="stat-lbl">محاضرة</div>
+          </div>
+          {% endif %}
+          {% if labs_count is not None %}
+          <div class="stat-box">
+            <div class="stat-num">{{ labs_count }}</div>
+            <div class="stat-lbl">مختبر</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- ════ RIGHT COLUMN ════ -->
+  <div class="col-lg-8">
+
+    {% if lectures %}
+    <div class="info-card fade-in-up fade-in-up-1">
+      <div class="info-card-header">
+        <i class="fas fa-calendar-alt"></i>
+        <h6>جدول المحاضرات ({{ lectures|length }})</h6>
+      </div>
+      <div class="info-card-body p-0">
+        <table class="mini-table">
+          <thead>
+            <tr><th>المادة</th><th>القسم</th><th>اليوم</th><th>الوقت</th><th>القاعة</th></tr>
+          </thead>
+          <tbody>
+            {% for lec in lectures %}
+            <tr>
+              <td style="font-weight:600;color:#0d5263;">{{ lec.course.course_name }}</td>
+              <td style="font-size:0.78rem;color:#5a7a84;">{{ lec.department.name }}</td>
+              <td>{{ lec.get_day_of_week_display }}</td>
+              <td style="font-size:0.78rem;">{{ lec.start_time|time:"H:i" }} — {{ lec.end_time|time:"H:i" }}</td>
+              <td style="font-size:0.78rem;">{{ lec.room.name|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if labs %}
+    <div class="info-card fade-in-up fade-in-up-2">
+      <div class="info-card-header">
+        <i class="fas fa-flask"></i>
+        <h6>جدول المختبرات ({{ labs|length }})</h6>
+      </div>
+      <div class="info-card-body p-0">
+        <table class="mini-table">
+          <thead>
+            <tr><th>المادة</th><th>اليوم</th><th>الوقت</th><th>المختبر</th></tr>
+          </thead>
+          <tbody>
+            {% for lab in labs %}
+            <tr>
+              <td style="font-weight:600;color:#0d5263;">{{ lab.course.course_name }}</td>
+              <td>{{ lab.get_day_of_week_display }}</td>
+              <td style="font-size:0.78rem;">{{ lab.start_time|time:"H:i" }} — {{ lab.end_time|time:"H:i" }}</td>
+              <td style="font-size:0.78rem;">{{ lab.hall.name|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not lectures and not labs and not student %}
+    <div class="info-card fade-in-up fade-in-up-1">
+      <div class="info-card-body">
+        <div class="empty-mini">
+          <i class="fas fa-user-circle"></i>
+          <p>لا توجد بيانات إضافية لعرضها لهذا المستخدم</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load timetable_tags %}
+{% block title %}إعداد الفترات الأكاديمية{% endblock %}
+{% block page_title %}إعداد الفترات - {{ dept.name }}{% endblock %}
+{% block content %}
+<div class="page-header fade-in-up">
+  <div class="page-header-title">
+    <div class="page-header-icon"><i class="fas fa-calendar-plus"></i></div>
+    <div><h4>إعداد الفترات - {{ dept.name }}</h4></div>
+  </div>
+  <a href="{% url 'cm_academic_periods' %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-right me-1"></i>رجوع</a>
+</div>
+<div class="row g-4 fade-in-up fade-in-up-1">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header card-header-dark d-flex align-items-center gap-2">
+        <i class="fas fa-plus" style="color:#00d4be;position:relative;z-index:1;"></i>
+        <span style="color:#fff;font-weight:700;position:relative;z-index:1;">إضافة فترة أكاديمية</span>
+      </div>
+      <div class="card-body">
+        <form method="post" class="row g-3 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-4">
+            <label class="form-label">السنة الدراسية</label>
+            <select name="year_id" class="form-select" required>
+              <option value="">اختر السنة...</option>
+              {% for year in years %}<option value="{{ year.pk }}">{{ year.year_name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">نوع الفصل</label>
+            <select name="semester_type" class="form-select" required>
+              <option value="">اختر الفصل...</option>
+              <option value="1">الفصل الأول</option>
+              <option value="2">الفصل الثاني</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-center gap-2 pb-1">
+            <input class="form-check-input mt-0" type="checkbox" name="is_active" id="is_active" checked>
+            <label class="form-check-label" for="is_active" style="font-size:0.85rem;">تفعيل الفترة</label>
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-tms w-100"><i class="fas fa-plus me-2"></i>إضافة الفترة</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header card-header-dark d-flex align-items-center gap-2">
+        <i class="fas fa-calendar-check" style="color:#00d4be;position:relative;z-index:1;"></i>
+        <span style="color:#fff;font-weight:700;position:relative;z-index:1;">الفترات الأكاديمية الحالية - {{ dept.name }}</span>
+      </div>
+      <div class="table-wrap">
+        <table class="tms-table">
+          <thead><tr><th>السنة</th><th>الفصل</th><th>الحالة</th><th>اكتمال الجدول</th><th>الإجراءات</th></tr></thead>
+          <tbody>
+            {% for period in dept_periods %}
+            {% with cs=completion_stats|get_item:period.pk %}
+            <tr>
+              <td><span class="chip">{{ period.year.year_name }}</span></td>
+              <td>
+                {% if period.semester_type == "1" %}<span class="badge-tms badge-primary">الفصل الأول</span>
+                {% else %}<span class="badge-tms badge-info-soft">الفصل الثاني</span>{% endif %}
+              </td>
+              <td>
+                <span class="badge-tms badge-success-soft">نشط</span>
+              </td>
+              <td style="min-width:140px;">
+                {% if cs %}
+                <div class="d-flex align-items-center gap-2">
+                  <div class="completion-bar-wrap" style="flex:1;">
+                    <div class="completion-bar" style="width:{{ cs.pct }}%;"></div>
+                  </div>
+                  <span class="completion-pct">{{ cs.pct }}%</span>
+                </div>
+                <div style="font-size:0.65rem;color:#7a9ba5;margin-top:2px;">{{ cs.lectures }} محاضرة / {{ cs.courses }} مادة</div>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <a href="{% url 'cm_period_delete' period.pk %}" class="btn btn-xs btn-outline-danger" title="حذف"><i class="fas fa-trash"></i></a>
+                </div>
+              </td>
+            </tr>
+            {% endwith %}
+            {% empty %}
+            <tr><td colspan="5"><div class="empty-state" style="padding:1.5rem;"><p>لا توجد فترات</p></div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
